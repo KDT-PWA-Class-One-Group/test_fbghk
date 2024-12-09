@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   db:
-    image: ghcr.io/test_fbghk/healthcheck-db:latest
+    image: ghcr.io/kdt-pwa-class-one-group/healthcheck-db:latest
     container_name: healthcheck-db
     environment:
       POSTGRES_DB: healthcheck
@@ -21,7 +21,7 @@ services:
       retries: 5
 
   api:
-    image: ghcr.io/test_fbghk/healthcheck-api:latest
+    image: ghcr.io/kdt-pwa-class-one-group/healthcheck-api:latest
     container_name: healthcheck-api
     environment:
       DATABASE_URL: postgresql://user:password@db:5432/healthcheck
@@ -42,7 +42,7 @@ services:
     restart: always
 
   client:
-    image: ghcr.io/test_fbghk/healthcheck-client:latest
+    image: ghcr.io/kdt-pwa-class-one-group/healthcheck-client:latest
     container_name: healthcheck-client
     environment:
       - NODE_ENV=development
@@ -62,7 +62,7 @@ services:
     restart: always
 
   proxy:
-    image: ghcr.io/test_fbghk/healthcheck-proxy:latest
+    image: ghcr.io/kdt-pwa-class-one-group/healthcheck-proxy:latest
     container_name: healthcheck-proxy
     ports:
       - "80:80"
