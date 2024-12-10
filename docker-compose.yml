@@ -1,8 +1,10 @@
+
 version: '3.8'
 
 services:
   db:
     image: ghcr.io/kdt-pwa-class-one-group/healthcheck-db:latest
+    platform: ${TARGETPLATFORM:-linux/amd64}
     container_name: healthcheck-db
     environment:
       POSTGRES_DB: healthcheck
@@ -22,6 +24,7 @@ services:
 
   api:
     image: ghcr.io/kdt-pwa-class-one-group/healthcheck-api:latest
+    platform: ${TARGETPLATFORM:-linux/amd64}
     container_name: healthcheck-api
     environment:
       DATABASE_URL: postgresql://user:password@db:5432/healthcheck
@@ -38,14 +41,16 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 10s
+      start_period: 30s
     restart: always
 
   client:
     image: ghcr.io/kdt-pwa-class-one-group/healthcheck-client:latest
+    platform: ${TARGETPLATFORM:-linux/amd64}
     container_name: healthcheck-client
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://api:8000
     ports:
       - "3000:3000"
     networks:
@@ -54,15 +59,22 @@ services:
       api:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:3000 || exit 1"]
-      interval: 10s
-      timeout: 5s
+      test: ["CMD-SHELL", "curl -f http://localhost:3000 || exit 1"]
+      interval: 30s
+      timeout: 20s
       retries: 5
-      start_period: 10s
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1G
     restart: always
 
   proxy:
     image: ghcr.io/kdt-pwa-class-one-group/healthcheck-proxy:latest
+    platform: ${TARGETPLATFORM:-linux/amd64}
     container_name: healthcheck-proxy
     ports:
       - "80:80"
@@ -71,13 +83,14 @@ services:
     volumes:
       - nginx_logs:/var/log/nginx
     depends_on:
-      - api
-      - client
+      client:
+        condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:80/health"]
+      test: ["CMD-SHELL", "curl -f http://localhost:80/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 20s
     restart: always
 
 networks:
